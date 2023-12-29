@@ -320,6 +320,12 @@ anta.tests.routing:
               - 10.1.255.0
               - 10.1.255.2
               - 10.1.255.4
+    - VerifyBGPEcmpPath:
+          bgp_routes:
+            - route: 192.0.255.1/32
+              vrf: default
+            - route: 192.0.254.3/32
+              vrf: default
   ospf:
     - VerifyOSPFNeighborState:
     - VerifyOSPFNeighborCount:

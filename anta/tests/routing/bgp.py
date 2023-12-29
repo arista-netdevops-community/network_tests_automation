@@ -447,3 +447,62 @@ class VerifyBGPSpecificPeers(AntaTest):
 
         if failures:
             self.result.is_failure(f"Failures: {list(failures.values())}")
+
+
+class VerifyBGPEcmpPath(AntaTest):
+    """
+    Verifies if a BGP route is contributed in ecmp in the specified VRF.
+    Expected results:
+        * success: The test will pass if a BGP route is contributed in ecmp and at least one path is an ecmp head in the specified VRF.
+        * failure: The test will fail if a BGP route is not found, no contributed in ecmp, or ecmp head is not found for any path in the specified VRF.
+    """
+
+    name = "VerifyBGPEcmpPath"
+    description = "Verifies if BGP route is contributed in ecmp in the specified VRF."
+    categories = ["routing", "bgp"]
+    commands = [AntaCommand(command="show ip bgp")]
+
+    class Input(AntaTest.Input):
+        """
+        Input parameters for the test.
+        """
+
+        bgp_routes: List[BgpPeers]
+        """List of BGP routes"""
+
+        class BgpPeers(BaseModel):
+            """
+            This class defines the details of a BGP route.
+            """
+
+            route: str
+            """IPv4/IPv6 BGP route"""
+            vrf: str = "default"
+            """VRF context"""
+
+    @AntaTest.anta_test
+    def test(self) -> None:
+        failures: dict[str, Any] = {}
+
+        # Iterate over each bgp route
+        for bgp_route in self.inputs.bgp_routes:
+            route = str(bgp_route.route)
+            vrf = bgp_route.vrf
+
+            # Verify if BGP route exist
+            if not (bgp_output := get_value(self.instance_commands[0].json_output, f"vrfs..{vrf}..bgpRouteEntries..{route}", separator="..")):
+                failures[str(route)] = {vrf: "Not configured"}
+                continue
+
+            # Verify BGP route's ecmp head and contribution
+            bgp_paths = bgp_output.get("bgpRoutePaths", [])
+            failures[route] = {vrf: "ECMP path is not installed"}
+            for path in bgp_paths:
+                if path.get("routeType", {}).get("ecmpHead") and path.get("routeType", {}).get("ecmpContributor"):
+                    failures.pop(route)
+                    break
+
+        if not failures:
+            self.result.is_success()
+        else:
+            self.result.is_failure(f"Following BGP routes are not configured, not contributed in ecmp, or ecmp head is not found:\n{failures}")
