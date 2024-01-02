@@ -451,14 +451,14 @@ class VerifyBGPSpecificPeers(AntaTest):
 
 class VerifyBGPEcmpPath(AntaTest):
     """
-    Verifies if a BGP route is contributed in ecmp in the specified VRF.
+    Verifies the installation of BGP Equal-Cost Multipath (ECMP) path in the specified VRF.
     Expected results:
         * success: The test will pass if a BGP route is contributed in ecmp and at least one path is an ecmp head in the specified VRF.
         * failure: The test will fail if a BGP route is not found, no contributed in ecmp, or ecmp head is not found for any path in the specified VRF.
     """
 
     name = "VerifyBGPEcmpPath"
-    description = "Verifies if BGP route is contributed in ecmp in the specified VRF."
+    description = "Verifies the installation of BGP Equal-Cost Multipath (ECMP) path in the specified VRF."
     categories = ["routing", "bgp"]
     commands = [AntaCommand(command="show ip bgp")]
 
