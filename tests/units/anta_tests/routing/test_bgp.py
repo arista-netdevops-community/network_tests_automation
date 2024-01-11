@@ -11,7 +11,7 @@ from typing import Any
 
 # pylint: disable=C0413
 # because of the patch above
-from anta.tests.routing.bgp import VerifyBGPEcmpPath, VerifyBGPPeerCount, VerifyBGPPeersHealth, VerifyBGPSpecificPeers  # noqa: E402
+from anta.tests.routing.bgp import VerifyBGPEcmp, VerifyBGPPeerCount, VerifyBGPPeersHealth, VerifyBGPSpecificPeers  # noqa: E402
 from tests.lib.anta import test  # noqa: F401; pylint: disable=W0611
 
 DATA: list[dict[str, Any]] = [
@@ -1241,7 +1241,7 @@ DATA: list[dict[str, Any]] = [
     },
     {
         "name": "success",
-        "test": VerifyBGPEcmpPath,
+        "test": VerifyBGPEcmp,
         "eos_data": [
             {
                 "vrfs": {
@@ -1249,47 +1249,221 @@ DATA: list[dict[str, Any]] = [
                         "bgpRouteEntries": {
                             "192.0.254.3/32": {
                                 "bgpRoutePaths": [
-                                    {"routeType": {"ecmpHead": True, "ecmp": True, "ecmpContributor": True}},
-                                    {"routeType": {"ecmpHead": False, "ecmp": True, "ecmpContributor": True}},
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
                                 ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "bgpRouteEntries": {
+                            "192.0.254.13/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "routes": {
+                            "192.0.254.3/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
                             }
                         }
                     }
                 }
-            }
-        ],
-        "inputs": {
-            "bgp_routes": [
-                {
-                    "route": "192.0.254.3/32",
-                    "vrf": "default",
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "routes": {
+                            "192.0.254.13/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
                 }
-            ]
-        },
+            },
+        ],
+        "inputs": {"prefixes": [{"prefix": "192.0.254.3/32", "vrf": "default", "ecmp_count": 2}, {"prefix": "192.0.254.13/32", "vrf": "MGMT", "ecmp_count": 2}]},
         "expected": {"result": "success"},
     },
     {
         "name": "failure-no-route",
-        "test": VerifyBGPEcmpPath,
-        "eos_data": [{"vrfs": {"default": {"bgpRouteEntries": {}}}}],
-        "inputs": {
-            "bgp_routes": [
-                {
-                    "route": "192.0.254.3/32",
-                    "vrf": "default",
+        "test": VerifyBGPEcmp,
+        "eos_data": [
+            {
+                "vrfs": {
+                    "default": {
+                        "bgpRouteEntries": {
+                            "192.0.254.31/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
                 }
-            ]
-        },
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "bgpRouteEntries": {
+                            "192.0.254.13/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "routes": {
+                            "192.0.254.31/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "routes": {
+                            "192.0.254.13/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+        ],
+        "inputs": {"prefixes": [{"prefix": "192.0.254.3/32", "vrf": "default", "ecmp_count": 2}, {"prefix": "192.0.254.13/32", "vrf": "MGMT", "ecmp_count": 2}]},
         "expected": {
             "result": "failure",
             "messages": [
-                "Following BGP routes are not configured, not contributed in ecmp, or ecmp head is not found:\n{'192.0.254.3/32': {'default': 'Not configured'}}"
+                "Following BGP prefixes are not configured, ECMP not installed, or ecmp path count is not matched:\n"
+                "{'192.0.254.3/32': {'default': {'unicast': 'Not configured', 'rib': 'Not configured'}}"
             ],
         },
     },
     {
-        "name": "failure-no-ecmp",
-        "test": VerifyBGPEcmpPath,
+        "name": "failure-no-ip-route",
+        "test": VerifyBGPEcmp,
         "eos_data": [
             {
                 "vrfs": {
@@ -1297,28 +1471,634 @@ DATA: list[dict[str, Any]] = [
                         "bgpRouteEntries": {
                             "192.0.254.3/32": {
                                 "bgpRoutePaths": [
-                                    {"routeType": {"ecmpHead": False, "ecmp": True, "ecmpContributor": True}},
-                                    {"routeType": {"ecmpHead": False, "ecmp": True, "ecmpContributor": True}},
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
                                 ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "bgpRouteEntries": {
+                            "192.0.254.13/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "routes": {
+                            "192.0.254.31/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
                             }
                         }
                     }
                 }
-            }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "routes": {
+                            "192.0.254.13/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+        ],
+        "inputs": {"prefixes": [{"prefix": "192.0.254.3/32", "vrf": "default", "ecmp_count": 2}, {"prefix": "192.0.254.13/32", "vrf": "MGMT", "ecmp_count": 2}]},
+        "expected": {
+            "result": "failure",
+            "messages": [
+                "Following BGP prefixes are not configured, ECMP not installed, or ecmp path count is not matched:\n"
+                "{'192.0.254.3/32': {'default': {'rib': 'Not configured'}}}"
+            ],
+        },
+    },
+    {
+        "name": "failure-no-unicast-route",
+        "test": VerifyBGPEcmp,
+        "eos_data": [
+            {
+                "vrfs": {
+                    "default": {
+                        "bgpRouteEntries": {
+                            "192.0.254.31/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "bgpRouteEntries": {
+                            "192.0.254.13/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "routes": {
+                            "192.0.254.3/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "routes": {
+                            "192.0.254.13/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+        ],
+        "inputs": {"prefixes": [{"prefix": "192.0.254.3/32", "vrf": "default", "ecmp_count": 2}, {"prefix": "192.0.254.13/32", "vrf": "MGMT", "ecmp_count": 2}]},
+        "expected": {
+            "result": "failure",
+            "messages": [
+                "Following BGP prefixes are not configured, ECMP not installed, or ecmp path count is not matched:\n"
+                "{'192.0.254.3/32': {'default': {'unicast': 'Not configured', 'ecmp_install': False}}}"
+            ],
+        },
+    },
+    {
+        "name": "failure-no-ecmp-install",
+        "test": VerifyBGPEcmp,
+        "eos_data": [
+            {
+                "vrfs": {
+                    "default": {
+                        "bgpRouteEntries": {
+                            "192.0.254.3/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "bgpRouteEntries": {
+                            "192.0.254.13/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": False,
+                                            "ecmp": False,
+                                            "ecmpContributor": False,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": False,
+                                            "ecmpContributor": False,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "routes": {
+                            "192.0.254.3/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "routes": {
+                            "192.0.254.13/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+        ],
+        "inputs": {"prefixes": [{"prefix": "192.0.254.3/32", "vrf": "default", "ecmp_count": 2}, {"prefix": "192.0.254.13/32", "vrf": "MGMT", "ecmp_count": 2}]},
+        "expected": {
+            "result": "failure",
+            "messages": [
+                "Following BGP prefixes are not configured, ECMP not installed, or ecmp path count is not matched:\n"
+                "{'192.0.254.3/32': {'default': {'ecmp_install': False}}, '192.0.254.13/32': {'MGMT': {'ecmp_install': False}}}"
+            ],
+        },
+    },
+    {
+        "name": "failure-path-missmatch",
+        "test": VerifyBGPEcmp,
+        "eos_data": [
+            {
+                "vrfs": {
+                    "default": {
+                        "bgpRouteEntries": {
+                            "192.0.254.3/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.3",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "bgpRouteEntries": {
+                            "192.0.254.13/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "routes": {
+                            "192.0.254.3/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "routes": {
+                            "192.0.254.13/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+        ],
+        "inputs": {"prefixes": [{"prefix": "192.0.254.3/32", "vrf": "default", "ecmp_count": 2}, {"prefix": "192.0.254.13/32", "vrf": "MGMT", "ecmp_count": 1}]},
+        "expected": {
+            "result": "failure",
+            "messages": [
+                "Following BGP prefixes are not configured, ECMP not installed, or ecmp path count is not matched:\n"
+                "{'192.0.254.3/32': {'default': {'ecmp_paths': 3, 'mismatched_paths': "
+                "{'bgp_paths': ['172.30.11.1', '172.30.11.3', '172.30.11.5'], 'ip_paths': ['172.30.11.1', '172.30.11.5']}}}, "
+                "'192.0.254.13/32': {'MGMT': {'ecmp_paths': 2, 'rib_paths': 2}}}"
+            ],
+        },
+    },
+    {
+        "name": "failure-all-type",
+        "test": VerifyBGPEcmp,
+        "eos_data": [
+            {
+                "vrfs": {
+                    "default": {
+                        "bgpRouteEntries": {
+                            "192.0.254.3/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "bgpRouteEntries": {
+                            "192.0.254.13/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": True,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "bgpRouteEntries": {
+                            "192.0.254.31/32": {
+                                "bgpRoutePaths": [
+                                    {
+                                        "nextHop": "172.30.11.5",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": True,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                    {
+                                        "nextHop": "172.30.11.1",
+                                        "routeType": {
+                                            "valid": True,
+                                            "active": False,
+                                            "ecmpHead": False,
+                                            "ecmp": True,
+                                            "ecmpContributor": True,
+                                        },
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "routes": {
+                            "192.0.254.3/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "vrfs": {
+                    "MGMT": {
+                        "routes": {
+                            "192.0.254.13/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.11",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "vrfs": {
+                    "default": {
+                        "routes": {
+                            "192.0.254.31/32": {
+                                "vias": [
+                                    {
+                                        "nexthopAddr": "172.30.11.1",
+                                    },
+                                    {
+                                        "nexthopAddr": "172.30.11.5",
+                                    },
+                                ],
+                            }
+                        }
+                    }
+                }
+            },
         ],
         "inputs": {
-            "bgp_routes": [
-                {
-                    "route": "192.0.254.3/32",
-                    "vrf": "default",
-                }
+            "prefixes": [
+                {"prefix": "192.0.254.30/32", "vrf": "default", "ecmp_count": 2},
+                {"prefix": "192.0.254.13/32", "vrf": "MGMT", "ecmp_count": 3},
+                {"prefix": "192.0.254.31/32", "vrf": "default", "ecmp_count": 3},
             ]
         },
         "expected": {
             "result": "failure",
             "messages": [
-                "Following BGP routes are not configured, not contributed in ecmp, or ecmp head is not found:\n"
-                "{'192.0.254.3/32': {'default': 'ECMP path is not installed'}}"
+                "Following BGP prefixes are not configured, ECMP not installed, or ecmp path count is not matched:\n"
+                "{'192.0.254.30/32': {'default': {'unicast': 'Not configured', 'rib': 'Not configured'}}, "
+                "'192.0.254.13/32': {'MGMT': {'ecmp_paths': 2, 'rib_paths': 2, 'mismatched_paths': "
+                "{'bgp_paths': ['172.30.11.1', '172.30.11.5'], 'ip_paths': ['172.30.11.11', '172.30.11.5']}}}, "
+                "'192.0.254.31/32': {'default': {'ecmp_paths': 2, 'rib_paths': 2, 'ecmp_install': False}}}"
             ],
         },
     },
