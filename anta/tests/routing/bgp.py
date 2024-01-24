@@ -8,7 +8,7 @@ BGP test functions
 # mypy: disable-error-code=attr-defined
 from __future__ import annotations
 
-from ipaddress import IPv4Address, IPv6Address
+from ipaddress import IPv4Address, IPv4Network, IPv6Address
 from typing import Any, List, Optional, Union, cast
 
 from pydantic import BaseModel, PositiveInt, model_validator
@@ -130,6 +130,30 @@ def _check_peer_issues(peer_data: Optional[dict[str, Any]]) -> dict[str, Any]:
         return {"peerState": peer_data["peerState"], "inMsgQueue": peer_data["inMsgQueue"], "outMsgQueue": peer_data["outMsgQueue"]}
 
     return {}
+
+
+def check_mismatch(path_data: dict[str, Any], failures: dict[str, Any]) -> dict[str, Any]:
+    """
+    This function checks for mismatches between 'bgp_paths' and 'ip_paths' in the given path data.
+    If a mismatch is found, it updates the failures dictionary with the mismatched paths.
+
+    Parameters:
+    path_data (dict): A dictionary containing path data.
+                      It is expected to have a nested structure: {prefix: {vrf: {path_info}}}.
+    failures (dict): A dictionary to record any mismatches found.
+                     It is expected to have a nested structure: {prefix: {vrf: {failure_info}}}.
+
+    Returns:
+    dict: The updated failures dictionary with any mismatches found.
+    """
+    for prefix, vrf_data in path_data.items():
+        for vrf, paths_info in vrf_data.items():
+            if "bgp_paths" in paths_info and "ip_paths" in paths_info:
+                # Check for mismatch
+                if paths_info["ip_paths"] != paths_info["bgp_paths"]:
+                    # Create nested dictionary structure for failures
+                    failures.setdefault(prefix, {}).setdefault(vrf, {})["mismatched_paths"] = paths_info
+    return failures
 
 
 class VerifyBGPPeerCount(AntaTest):
@@ -447,3 +471,104 @@ class VerifyBGPSpecificPeers(AntaTest):
 
         if failures:
             self.result.is_failure(f"Failures: {list(failures.values())}")
+
+
+class VerifyBGPEcmp(AntaTest):
+    """
+    Verifies the installation of BGP Equal-Cost Multipath (ECMP) path in the specified VRF.
+    Expected results:
+        * success: The test will pass if a BGP prefix has ECMP installed and the next hop addresses are the same as the IP route in the specified VRF.
+        * failure: The test will fail if a BGP prefix is not found, ECMP path is not found and the ECMP paths do not match with the IP paths in the specified VRF.
+    """
+
+    name = "VerifyBGPEcmp"
+    description = "Verifies the installation of BGP Equal-Cost Multipath (ECMP) path in the specified VRF."
+    categories = ["routing", "bgp"]
+    commands = [
+        AntaTemplate(template="show bgp ipv4 unicast {prefix} vrf {vrf}"),
+        AntaTemplate(template="show ip route vrf {vrf} {prefix}"),
+    ]
+
+    class Input(AntaTest.Input):
+        """
+        Input parameters for the test.
+        """
+
+        prefixes: List[BgpPrefixes]
+        """List of BGP prefixes"""
+
+        class BgpPrefixes(BaseModel):
+            """
+            This class defines the details of a BGP prefix.
+            """
+
+            prefix: IPv4Network
+            """IPv4 BGP prefix"""
+            vrf: str = "default"
+            """Optional VRF for BGP peer. If not provided, it defaults to `default`."""
+            ecmp_count: int
+            """Maximum number of ECMP paths"""
+
+    def render(self, template: AntaTemplate) -> list[AntaCommand]:
+        """Renders the template with the provided inputs. Returns a list of commands to be executed."""
+
+        return [template.render(prefix=bgp_prefix.prefix, vrf=bgp_prefix.vrf, ecmp_count=bgp_prefix.ecmp_count) for bgp_prefix in self.inputs.prefixes]
+
+    @AntaTest.anta_test
+    def test(self) -> None:
+        failures: dict[str, Any] = {}
+        path_data: dict[str, Any] = {}
+        ecmp_install = {}
+
+        # Iterate over command output for different prefixes
+        for command in self.instance_commands:
+            prefix = str(command.params["prefix"])
+            vrf = command.params["vrf"]
+            ecmp_count = command.params["ecmp_count"]
+
+            # Determine if the command is for unicast
+            is_unicast = "unicast" in command.command
+            paths = get_value(
+                command.json_output,
+                f"vrfs..{vrf}..bgpRouteEntries..{prefix}..bgpRoutePaths" if is_unicast else f"vrfs..{vrf}..routes..{prefix}..vias",
+                separator="..",
+            )
+
+            # If paths do not exist, mark as not configured
+            if not paths:
+                failures.setdefault(prefix, {}).setdefault(vrf, {}).setdefault("unicast" if is_unicast else "rib", "Not configured")
+                continue
+
+            # Check the ecmp count and rib path count with respect to input
+            if len(paths) != ecmp_count:
+                failures.setdefault(prefix, {}).setdefault(vrf, {}).setdefault("ecmp_paths" if is_unicast else "rib_paths", len(paths))
+
+            # Process the paths based on the command type
+            addresses = set()
+            for path in paths:
+                if is_unicast:
+                    # For unicast, check various routeType conditions
+                    if all(get_value(path, f"routeType.{attr}") for attr in ["ecmpHead", "valid", "active"]):
+                        ecmp_install[prefix] = True
+                        addresses.add(path.get("nextHop"))
+                    elif all(get_value(path, f"routeType.{attr}") for attr in ["ecmp", "ecmpContributor", "valid"]):
+                        addresses.add(path.get("nextHop"))
+                else:
+                    # For non-unicast, simply add the nexthopAddr
+                    if not ecmp_install.get(prefix):
+                        failures.setdefault(prefix, {}).setdefault(vrf, {})["ecmp_install"] = False
+                        break
+                    addresses.add(path.get("nexthopAddr"))
+
+            # Update path_data with the addresses
+            path_data.setdefault(prefix, {}).setdefault(vrf, {}).update(
+                {"bgp_paths" if is_unicast else "ip_paths": sorted(addresses)} if ecmp_install.get(prefix) else ""
+            )
+
+        # Compare bgp_paths and ip_paths
+        failures = check_mismatch(path_data, failures)
+
+        if not failures:
+            self.result.is_success()
+        else:
+            self.result.is_failure(f"Following BGP prefixes are not configured, ECMP not installed, or ecmp path count is not matched:\n{failures}")
