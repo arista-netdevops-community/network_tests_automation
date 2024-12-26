@@ -45,10 +45,8 @@ def debug_options(f: Callable[..., Any]) -> Callable[..., Any]:
         *args: tuple[Any],
         inventory: AntaInventory,
         device: str,
-        **kwargs: Any,
-    ) -> Any:
-        # TODO: @gmuloc - tags come from context https://github.com/aristanetworks/anta/issues/584
-        # ruff: noqa: ARG001
+        **kwargs: dict[str, Any],
+    ) -> Callable[..., Any]:
         if (d := inventory.get(device)) is None:
             logger.error("Device '%s' does not exist in Inventory", device)
             ctx.exit(ExitCode.USAGE_ERROR)
