@@ -18,6 +18,8 @@ class Host(BaseModel):
     """Model for a remote host to ping."""
 
     model_config = ConfigDict(extra="forbid")
+    description: str | None = None
+    """Description of the remote destination."""
     destination: IPv4Address
     """IPv4 address to ping."""
     source: IPv4Address | Interface
@@ -33,7 +35,7 @@ class Host(BaseModel):
 
     def __str__(self) -> str:
         """Return a human-readable string representation of the Host for reporting."""
-        return f"Host {self.destination} in VRF {self.vrf}"
+        return f"Destination {self.destination}{f' ({self.description})' if self.description is not None else ''} from {self.source} in VRF {self.vrf}"
 
 
 class LLDPNeighbor(BaseModel):
