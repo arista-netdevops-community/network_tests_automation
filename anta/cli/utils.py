@@ -193,7 +193,7 @@ def core_options(f: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(f)
     def wrapper(
         ctx: click.Context,
-        *args: tuple[Any],
+        *args: Any,  # noqa: ANN401
         inventory: Path,
         username: str,
         password: str | None,
@@ -203,7 +203,7 @@ def core_options(f: Callable[..., Any]) -> Callable[..., Any]:
         timeout: float,
         insecure: bool,
         disable_cache: bool,
-        **kwargs: dict[str, Any],
+        **kwargs: Any,  # noqa: ANN401
     ) -> Callable[..., Any]:
         # If help is invoke somewhere, do not parse inventory
         if ctx.obj.get("_anta_help"):
@@ -265,9 +265,9 @@ def inventory_options(f: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(f)
     def wrapper(
         ctx: click.Context,
-        *args: tuple[Any],
+        *args: Any,  # noqa: ANN401
         tags: set[str] | None,
-        **kwargs: dict[str, Any],
+        **kwargs: Any,  # noqa: ANN401
     ) -> Callable[..., Any]:
         # If help is invoke somewhere, do not parse inventory
         if ctx.obj.get("_anta_help"):
@@ -307,10 +307,10 @@ def catalog_options(f: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(f)
     def wrapper(
         ctx: click.Context,
-        *args: tuple[Any],
+        *args: Any,  # noqa: ANN401
         catalog: Path,
         catalog_format: str,
-        **kwargs: dict[str, Any],
+        **kwargs: Any,  # noqa: ANN401
     ) -> Callable[..., Any]:
         # If help is invoke somewhere, do not parse catalog
         if ctx.obj.get("_anta_help"):
