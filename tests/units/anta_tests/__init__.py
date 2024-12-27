@@ -3,10 +3,41 @@
 # that can be found in the LICENSE file.
 """Tests for anta.tests module."""
 
-import asyncio
-from typing import Any
+from __future__ import annotations
 
-from anta.device import AntaDevice
+import asyncio
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
+
+if TYPE_CHECKING:
+    from anta.device import AntaDevice
+    from anta.models import AntaTest
+
+
+class AtomicResult(TypedDict):
+    """Expected atomic result of a unit test of an AntaTest subclass."""
+
+    result: Literal["success", "failure", "skipped"]  # TODO: Refactor tests and use AntaTestStatus
+    description: str
+    messages: NotRequired[list[str]]
+    inputs: NotRequired[dict[str, Any]]
+
+
+class Expected(TypedDict):
+    """Expected result of a unit test of an AntaTest subclass."""
+
+    result: Literal["success", "failure", "skipped"]  # TODO: Refactor tests and use AntaTestStatus
+    messages: NotRequired[list[str]]
+    atomic_results: NotRequired[list[AtomicResult]]
+
+
+class AntaUnitTest(TypedDict):
+    """The parameters required for a unit test of an AntaTest subclass."""
+
+    name: str  # TODO: Refactor tests and change the DATA constant type as dictionary instead of list[AntaUnitTest] to avoid test duplicates.
+    test: type[AntaTest]
+    inputs: NotRequired[dict[str, Any]]
+    eos_data: list[dict[str, Any] | str]
+    expected: Expected
 
 
 def test(device: AntaDevice, data: dict[str, Any]) -> None:
@@ -17,6 +48,8 @@ def test(device: AntaDevice, data: dict[str, Any]) -> None:
     See `tests/units/anta_tests/README.md` for more information on how to use it.
     """
     # Instantiate the AntaTest subclass
+    if "inputs" not in data:
+        data["inputs"] = None
     test_instance = data["test"](device, inputs=data["inputs"], eos_data=data["eos_data"])
     # Run the test() method
     asyncio.run(test_instance.test())
@@ -39,7 +72,7 @@ def test(device: AntaDevice, data: dict[str, Any]) -> None:
             data["expected"]["atomic_results"]
         ), f"Expected {len(data['expected']['atomic_results'])} atomic results, got {len(test_instance.result.atomic_results)}"
         for result, expected in zip(test_instance.result.atomic_results, data["expected"]["atomic_results"]):
-            assert result.model_dump(serialize_as_any=True, mode="json") == expected
+            assert result.model_dump(mode="json", exclude_none=True) == expected
     else:
         # Test result should not have atomic results
         assert test_instance.result.atomic_results == [], "There are untested atomic results"
