@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, TypedDict
 
 if TYPE_CHECKING:
+    from typing_extensions import NotRequired
+
     from anta.device import AntaDevice
     from anta.models import AntaTest
 
