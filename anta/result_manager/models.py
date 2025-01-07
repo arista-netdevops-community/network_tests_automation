@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, InstanceOf, SerializeAsAny, SkipValidation
+from pydantic import BaseModel, InstanceOf, SerializeAsAny
 
 
 class AntaTestStatus(str, Enum):
@@ -99,7 +99,7 @@ class AtomicTestResult(BaseTestResult):
 
     _parent: TestResult
     description: str
-    inputs: SkipValidation[SerializeAsAny[InstanceOf[BaseModel]] | None] = None
+    inputs: SerializeAsAny[InstanceOf[BaseModel] | None] = None
     result: AntaTestStatus = AntaTestStatus.UNSET
     messages: list[str] = []
 
@@ -157,7 +157,7 @@ class TestResult(BaseTestResult):
     test: str
     categories: list[str]
     description: str
-    inputs: SkipValidation[SerializeAsAny[InstanceOf[BaseModel]] | None] = None  # A TestResult inputs can be None in case of inputs validation error
+    inputs: SerializeAsAny[InstanceOf[BaseModel]] | None = None  # A TestResult inputs can be None in case of inputs validation error
     custom_field: str | None = None
     result: AntaTestStatus = AntaTestStatus.UNSET
     messages: list[str] = []
