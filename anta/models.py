@@ -448,8 +448,9 @@ class AntaTest(ABC):
         self.device: AntaDevice = device
         self.inputs: AntaTest.Input
         self.instance_commands: list[AntaCommand] = []
-        self.result: TestResult = TestResult(name=device.name, test=self.name, categories=self.categories, description=self.description, inputs=None)
+        self.result: TestResult = TestResult.model_construct(name=device.name, test=self.name, categories=self.categories, description=self.description)
         self._init_inputs(inputs)
+        self.result.inputs = self.inputs
         if self.result.result == AntaTestStatus.UNSET:
             self._init_commands(eos_data)
 
@@ -478,7 +479,6 @@ class AntaTest(ABC):
             if res_ow.description:
                 self.result.description = res_ow.description
             self.result.custom_field = res_ow.custom_field
-        self.result.inputs = self.inputs
 
     def _init_commands(self, eos_data: list[dict[Any, Any] | str] | None) -> None:
         """Instantiate the `instance_commands` instance attribute from the `commands` class attribute.
