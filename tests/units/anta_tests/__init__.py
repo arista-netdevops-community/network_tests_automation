@@ -50,9 +50,7 @@ def test(device: AntaDevice, data: dict[str, Any]) -> None:
     See `tests/units/anta_tests/README.md` for more information on how to use it.
     """
     # Instantiate the AntaTest subclass
-    if "inputs" not in data:
-        data["inputs"] = None
-    test_instance = data["test"](device, inputs=data["inputs"], eos_data=data["eos_data"])
+    test_instance = data["test"](device, inputs=data.get("inputs"), eos_data=data["eos_data"])
     # Run the test() method
     asyncio.run(test_instance.test())
     # Assert expected result
