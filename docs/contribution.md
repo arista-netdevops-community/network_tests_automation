@@ -162,8 +162,9 @@ DATA: list[AntaUnitTest] = [
         "test": VerifyUptime,
         "eos_data": [{"upTime": 665.15, "loadAvg": [0.13, 0.12, 0.09], "users": 1, "currentTime": 1683186659.139859}],
         "inputs": {"minimum": 666},
-        # If the test returns messages, it needs to be expected otherwise test will fail.
+        # If the test returns messages, it needs to be added here otherwise test will fail.
         # The expected message can be a substring of the actual message.
+        # The messages must be defined in the same order.
         "expected": {"result": "failure", "messages": ["Device uptime is 665.15 seconds"]},
     },
 ]
@@ -213,12 +214,13 @@ DATA: list[AntaUnitTest] = [
             "result": "failure",
             "messages": ["Unreachable Destination 10.0.0.11 from 10.0.0.5 in VRF default"],
             # This test has implemented atomic results.
-            # Expected atomic results must be specified or the test will fail.
+            # Expected atomic results must be specified or the test will fail. Order matters.
+            # The atomic results must be defined in the same order.
             "atomic_results": [
                 {
                     # Expected atomic result description
                     "description": "Destination 10.0.0.11 from 10.0.0.5 in VRF default",
-                    # If the atomic result is tied to a subset of the test inputs, it needs to be expected here.
+                    # If the atomic result is tied to a subset of the test inputs, it needs to be added here otherwise the test will fail.
                     "inputs": {
                         "destination": "10.0.0.11",
                         "df_bit": False,
@@ -229,8 +231,9 @@ DATA: list[AntaUnitTest] = [
                     },
                     # Expected atomic result status
                     "result": "failure",
-                    # If the atomic result returns messages, it needs to be expected otherwise test will fail.
+                    # If the atomic result returns messages, it needs to be added here otherwise test will fail.
                     # The expected message can be a substring of the actual message.
+                    # The messages must be defined in the same order.
                     "messages": ["Unreachable Destination 10.0.0.11 from 10.0.0.5 in VRF default"],
 
                 },
