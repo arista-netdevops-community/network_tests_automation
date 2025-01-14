@@ -16,6 +16,7 @@ from anta.tests.logging import (
     VerifyLoggingPersistent,
     VerifyLoggingSourceIntf,
     VerifyLoggingTimestamp,
+    VerifySyslogLogging,
 )
 from tests.units.anta_tests import test
 
@@ -264,5 +265,46 @@ DATA: list[AntaUnitTest] = [
             "Aug  2 19:57:42 DC1-LEAF1A Mlag: %FWK-3-SOCKET_CLOSE_REMOTE: Connection to Mlag (pid:27200) at tbt://192.168.0.1:4432/+n closed by peer (EOF)",
         ],
         "expected": {"result": "failure", "messages": ["Device has reported syslog messages with a severity of ERRORS or higher"]},
+    },
+    {
+        "name": "success",
+        "test": VerifySyslogLogging,
+        "eos_data": [
+            """Syslog logging: enabled
+            Buffer logging: level debugging
+
+            External configuration:
+                active:
+                inactive:
+
+            Facility                   Severity            Effective Severity
+            --------------------       -------------       ------------------
+            aaa                        debugging           debugging
+            accounting                 debugging           debugging""",
+        ],
+        "inputs": None,
+        "expected": {"result": "success"},
+    },
+    {
+        "name": "failure",
+        "test": VerifySyslogLogging,
+        "eos_data": [
+            """Syslog logging: disabled
+            Buffer logging: level debugging
+            Console logging: level errors
+            Persistent logging: disabled
+            Monitor logging: level errors
+
+            External configuration:
+                active:
+                inactive:
+
+            Facility                   Severity            Effective Severity
+            --------------------       -------------       ------------------
+            aaa                        debugging           debugging
+            accounting                 debugging           debugging""",
+        ],
+        "inputs": None,
+        "expected": {"result": "failure", "messages": ["Syslog logging is disabled."]},
     },
 ]
