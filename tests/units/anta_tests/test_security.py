@@ -335,7 +335,7 @@ DATA: list[AntaUnitTest] = [
         },
         "expected": {
             "result": "failure",
-            "messages": ["SSL certificate 'ARISTA_ROOT_CA.crt', is not configured.\n"],
+            "messages": ["Certificate: ARISTA_ROOT_CA.crt - Not found"],
         },
     },
     {
@@ -361,13 +361,6 @@ DATA: list[AntaUnitTest] = [
         "inputs": {
             "certificates": [
                 {
-                    "certificate_name": "ARISTA_SIGNING_CA.crt",
-                    "expiry_threshold": 30,
-                    "common_name": "AristaIT-ICA ECDSA Issuing Cert Authority",
-                    "encryption_algorithm": "ECDSA",
-                    "key_size": 256,
-                },
-                {
                     "certificate_name": "ARISTA_ROOT_CA.crt",
                     "expiry_threshold": 30,
                     "common_name": "Arista Networks Internal IT Root Cert Authority",
@@ -378,7 +371,7 @@ DATA: list[AntaUnitTest] = [
         },
         "expected": {
             "result": "failure",
-            "messages": ["SSL certificate 'ARISTA_SIGNING_CA.crt', is not configured.\n", "SSL certificate `ARISTA_ROOT_CA.crt` is expired.\n"],
+            "messages": ["Certificate: ARISTA_ROOT_CA.crt - certificate expired"],
         },
     },
     {
@@ -397,7 +390,7 @@ DATA: list[AntaUnitTest] = [
                     },
                     "ARISTA_SIGNING_CA.crt": {
                         "subject": {"commonName": "AristaIT-ICA ECDSA Issuing Cert Authority"},
-                        "notAfter": 1702533518,
+                        "notAfter": 1705992709,
                         "publicKey": {
                             "encryptionAlgorithm": "ECDSA",
                             "size": 256,
@@ -429,7 +422,9 @@ DATA: list[AntaUnitTest] = [
         },
         "expected": {
             "result": "failure",
-            "messages": ["SSL certificate `ARISTA_SIGNING_CA.crt` is expired.\n", "SSL certificate `ARISTA_ROOT_CA.crt` is about to expire in 25 days."],
+            "messages": [
+                "Certificate: ARISTA_ROOT_CA.crt - set to expire within the threshold - Threshold: 30 days Actual: 25 days",
+            ],
         },
     },
     {
@@ -481,12 +476,10 @@ DATA: list[AntaUnitTest] = [
         "expected": {
             "result": "failure",
             "messages": [
-                "SSL certificate `ARISTA_SIGNING_CA.crt` is not configured properly:\n"
-                "Expected `AristaIT-ICA ECDSA Issuing Cert Authority` as the subject.commonName, but found "
-                "`Arista ECDSA Issuing Cert Authority` instead.\n",
-                "SSL certificate `ARISTA_ROOT_CA.crt` is not configured properly:\n"
-                "Expected `Arista Networks Internal IT Root Cert Authority` as the subject.commonName, "
-                "but found `AristaIT-ICA Networks Internal IT Root Cert Authority` instead.\n",
+                "Certificate: ARISTA_SIGNING_CA.crt - incorrect common name - Expected: AristaIT-ICA ECDSA Issuing Cert Authority "
+                "Actual: Arista ECDSA Issuing Cert Authority",
+                "Certificate: ARISTA_ROOT_CA.crt - incorrect common name - Expected: Arista Networks Internal IT Root Cert Authority "
+                "Actual: AristaIT-ICA Networks Internal IT Root Cert Authority",
             ],
         },
     },
@@ -539,17 +532,15 @@ DATA: list[AntaUnitTest] = [
         "expected": {
             "result": "failure",
             "messages": [
-                "SSL certificate `ARISTA_SIGNING_CA.crt` is not configured properly:\n"
-                "Expected `ECDSA` as the publicKey.encryptionAlgorithm, but found `RSA` instead.\n"
-                "Expected `256` as the publicKey.size, but found `4096` instead.\n",
-                "SSL certificate `ARISTA_ROOT_CA.crt` is not configured properly:\n"
-                "Expected `RSA` as the publicKey.encryptionAlgorithm, but found `ECDSA` instead.\n"
-                "Expected `4096` as the publicKey.size, but found `256` instead.\n",
+                "Certificate: ARISTA_SIGNING_CA.crt - incorrect encryption algorithm - Expected: ECDSA Actual: RSA",
+                "Certificate: ARISTA_SIGNING_CA.crt - incorrect public key - Expected: 256 Actual: 4096",
+                "Certificate: ARISTA_ROOT_CA.crt - incorrect encryption algorithm - Expected: RSA Actual: ECDSA",
+                "Certificate: ARISTA_ROOT_CA.crt - incorrect public key - Expected: 4096 Actual: 256",
             ],
         },
     },
     {
-        "name": "failure-missing-actual-output",
+        "name": "failure-missing-algorithm-details",
         "test": VerifyAPISSLCertificate,
         "eos_data": [
             {
@@ -589,12 +580,10 @@ DATA: list[AntaUnitTest] = [
         "expected": {
             "result": "failure",
             "messages": [
-                "SSL certificate `ARISTA_SIGNING_CA.crt` is not configured properly:\n"
-                "Expected `ECDSA` as the publicKey.encryptionAlgorithm, but it was not found in the actual output.\n"
-                "Expected `256` as the publicKey.size, but it was not found in the actual output.\n",
-                "SSL certificate `ARISTA_ROOT_CA.crt` is not configured properly:\n"
-                "Expected `RSA` as the publicKey.encryptionAlgorithm, but it was not found in the actual output.\n"
-                "Expected `4096` as the publicKey.size, but it was not found in the actual output.\n",
+                "Certificate: ARISTA_SIGNING_CA.crt - incorrect encryption algorithm - Expected: ECDSA Actual: Not found",
+                "Certificate: ARISTA_SIGNING_CA.crt - incorrect public key - Expected: 256 Actual: Not found",
+                "Certificate: ARISTA_ROOT_CA.crt - incorrect encryption algorithm - Expected: RSA Actual: Not found",
+                "Certificate: ARISTA_ROOT_CA.crt - incorrect public key - Expected: 4096 Actual: Not found",
             ],
         },
     },
@@ -711,22 +700,20 @@ DATA: list[AntaUnitTest] = [
             {
                 "aclList": [
                     {
+                        "name": "default-control-plane-acl",
                         "sequence": [
                             {"text": "permit icmp any any", "sequenceNumber": 10},
                             {"text": "permit ip any any tracked", "sequenceNumber": 20},
                             {"text": "permit udp any any eq bfd ttl eq 255", "sequenceNumber": 30},
                         ],
-                    }
-                ]
-            },
-            {
-                "aclList": [
+                    },
                     {
+                        "name": "LabTest",
                         "sequence": [
                             {"text": "permit icmp any any", "sequenceNumber": 10},
                             {"text": "permit tcp any any range 5900 5910", "sequenceNumber": 20},
                         ],
-                    }
+                    },
                 ]
             },
         ],
@@ -749,12 +736,31 @@ DATA: list[AntaUnitTest] = [
         "expected": {"result": "success"},
     },
     {
+        "name": "failure-no-acl-list",
+        "test": VerifyIPv4ACL,
+        "eos_data": [
+            {"aclList": []},
+        ],
+        "inputs": {
+            "ipv4_access_lists": [
+                {
+                    "name": "default-control-plane-acl",
+                    "entries": [
+                        {"sequence": 10, "action": "permit icmp any any"},
+                    ],
+                },
+            ]
+        },
+        "expected": {"result": "failure", "messages": ["No Access Control List (ACL) configured"]},
+    },
+    {
         "name": "failure-acl-not-found",
         "test": VerifyIPv4ACL,
         "eos_data": [
             {
                 "aclList": [
                     {
+                        "name": "default-control-plane-acl",
                         "sequence": [
                             {"text": "permit icmp any any", "sequenceNumber": 10},
                             {"text": "permit ip any any tracked", "sequenceNumber": 20},
@@ -763,7 +769,6 @@ DATA: list[AntaUnitTest] = [
                     }
                 ]
             },
-            {"aclList": []},
         ],
         "inputs": {
             "ipv4_access_lists": [
@@ -781,7 +786,7 @@ DATA: list[AntaUnitTest] = [
                 },
             ]
         },
-        "expected": {"result": "failure", "messages": ["LabTest: Not found"]},
+        "expected": {"result": "failure", "messages": ["ACL name: LabTest - Not configured"]},
     },
     {
         "name": "failure-sequence-not-found",
@@ -790,22 +795,20 @@ DATA: list[AntaUnitTest] = [
             {
                 "aclList": [
                     {
+                        "name": "default-control-plane-acl",
                         "sequence": [
                             {"text": "permit icmp any any", "sequenceNumber": 10},
                             {"text": "permit ip any any tracked", "sequenceNumber": 20},
                             {"text": "permit udp any any eq bfd ttl eq 255", "sequenceNumber": 40},
                         ],
-                    }
-                ]
-            },
-            {
-                "aclList": [
+                    },
                     {
+                        "name": "LabTest",
                         "sequence": [
                             {"text": "permit icmp any any", "sequenceNumber": 10},
                             {"text": "permit tcp any any range 5900 5910", "sequenceNumber": 30},
                         ],
-                    }
+                    },
                 ]
             },
         ],
@@ -827,7 +830,7 @@ DATA: list[AntaUnitTest] = [
         },
         "expected": {
             "result": "failure",
-            "messages": ["default-control-plane-acl:\nSequence number `30` is not found.\n", "LabTest:\nSequence number `20` is not found.\n"],
+            "messages": ["ACL name: default-control-plane-acl Sequence: 30 - Not configured", "ACL name: LabTest Sequence: 20 - Not configured"],
         },
     },
     {
@@ -837,22 +840,20 @@ DATA: list[AntaUnitTest] = [
             {
                 "aclList": [
                     {
+                        "name": "default-control-plane-acl",
                         "sequence": [
                             {"text": "permit icmp any any", "sequenceNumber": 10},
                             {"text": "permit ip any any tracked", "sequenceNumber": 20},
                             {"text": "permit tcp any any range 5900 5910", "sequenceNumber": 30},
                         ],
-                    }
-                ]
-            },
-            {
-                "aclList": [
+                    },
                     {
+                        "name": "LabTest",
                         "sequence": [
                             {"text": "permit icmp any any", "sequenceNumber": 10},
                             {"text": "permit udp any any eq bfd ttl eq 255", "sequenceNumber": 20},
                         ],
-                    }
+                    },
                 ]
             },
         ],
@@ -875,9 +876,9 @@ DATA: list[AntaUnitTest] = [
         "expected": {
             "result": "failure",
             "messages": [
-                "default-control-plane-acl:\n"
-                "Expected `permit udp any any eq bfd ttl eq 255` as sequence number 30 action but found `permit tcp any any range 5900 5910` instead.\n",
-                "LabTest:\nExpected `permit tcp any any range 5900 5910` as sequence number 20 action but found `permit udp any any eq bfd ttl eq 255` instead.\n",
+                "ACL name: default-control-plane-acl Sequence: 30 - action mismatch - Expected: permit udp any any eq bfd ttl eq 255 "
+                "Actual: permit tcp any any range 5900 5910",
+                "ACL name: LabTest Sequence: 20 - action mismatch - Expected: permit tcp any any range 5900 5910 Actual: permit udp any any eq bfd ttl eq 255",
             ],
         },
     },
@@ -888,6 +889,7 @@ DATA: list[AntaUnitTest] = [
             {
                 "aclList": [
                     {
+                        "name": "default-control-plane-acl",
                         "sequence": [
                             {"text": "permit icmp any any", "sequenceNumber": 10},
                             {"text": "permit ip any any tracked", "sequenceNumber": 40},
@@ -896,7 +898,6 @@ DATA: list[AntaUnitTest] = [
                     }
                 ]
             },
-            {"aclList": []},
         ],
         "inputs": {
             "ipv4_access_lists": [
@@ -917,9 +918,10 @@ DATA: list[AntaUnitTest] = [
         "expected": {
             "result": "failure",
             "messages": [
-                "default-control-plane-acl:\nSequence number `20` is not found.\n"
-                "Expected `permit udp any any eq bfd ttl eq 255` as sequence number 30 action but found `permit tcp any any range 5900 5910` instead.\n",
-                "LabTest: Not found",
+                "ACL name: default-control-plane-acl Sequence: 20 - Not configured",
+                "ACL name: default-control-plane-acl Sequence: 30 - action mismatch - Expected: permit udp any any eq bfd ttl eq 255 "
+                "Actual: permit tcp any any range 5900 5910",
+                "ACL name: LabTest - Not configured",
             ],
         },
     },

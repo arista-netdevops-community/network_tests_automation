@@ -46,3 +46,11 @@ KNOWN_EOS_ERRORS = [
     r"There seem to be no power supplies connected.",
 ]
 """List of known EOS errors that should set a test status to 'failure' with the error message."""
+
+UNSUPPORTED_PLATFORM_ERRORS = [
+    "not supported on this hardware platform",
+    "Invalid input (at token 2: 'trident')",
+]
+"""Error messages indicating platform or hardware unsupported commands.
+Will set the test status to 'skipped'. Includes both general hardware
+platform errors and specific ASIC family limitations."""
