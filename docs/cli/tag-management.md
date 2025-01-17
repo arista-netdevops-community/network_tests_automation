@@ -241,7 +241,7 @@ To get the list of all configured tags in the inventory, run the following comma
 
 ```bash
 $ anta get tags
-Tags found:
+Tags defined in inventory:
 [
   "leaf",
   "leaf1",
