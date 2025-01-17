@@ -104,8 +104,14 @@ class ResultManager:
 
         If the status of the added test is error, the status is untouched and the
         error_status is set to True.
+
+        Attributes
+        ----------
+        _ta
+            pydantic.TypeAdapter object to serialize and dump a ResultManager instance.
+
         """
-        self.ta = TypeAdapter(list[TestResult])
+        self._ta = TypeAdapter(list[TestResult])
         self.reset()
 
     def reset(self) -> None:
@@ -138,12 +144,12 @@ class ResultManager:
     @property
     def dump(self) -> list[dict[str, Any]]:
         """Get a list of dictionary of the results."""
-        return self.ta.dump_python(self._results)
+        return self._ta.dump_python(self._results)
 
     @property
     def json(self) -> str:
         """Get a JSON representation of the results."""
-        return self.ta.dump_json(self._results, exclude_none=True, indent=4).decode()
+        return self._ta.dump_json(self._results, exclude_none=True, indent=4).decode()
 
     @property
     def device_stats(self) -> dict[str, DeviceStats]:
