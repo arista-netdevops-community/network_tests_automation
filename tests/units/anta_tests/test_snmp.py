@@ -10,6 +10,7 @@ from typing import Any
 from anta.tests.snmp import (
     VerifySnmpContact,
     VerifySnmpErrorCounters,
+    VerifySnmpGroup,
     VerifySnmpHostLogging,
     VerifySnmpIPv4Acl,
     VerifySnmpIPv6Acl,
@@ -533,6 +534,300 @@ DATA: list[dict[str, Any]] = [
                 "User: Test3 Group: TestGroup3 Version: v3 - Incorrect privacy type - Expected: AES-128 Actual: AES-192",
                 "User: Test4 Group: TestGroup4 Version: v3 - Incorrect authentication type - Expected: SHA-512 Actual: SHA-384",
                 "User: Test4 Group: TestGroup4 Version: v3 - Incorrect privacy type - Expected: AES-192 Actual: AES-128",
+            ],
+        },
+    },
+    {
+        "name": "success",
+        "test": VerifySnmpGroup,
+        "eos_data": [
+            {
+                "groups": {
+                    "Group1": {
+                        "versions": {
+                            "v1": {
+                                "secModel": "v1",
+                                "readView": "group_read_1",
+                                "readViewConfig": True,
+                                "writeView": "group_write_1",
+                                "writeViewConfig": True,
+                                "notifyView": "group_notify_1",
+                                "notifyViewConfig": True,
+                            }
+                        }
+                    },
+                    "Group2": {
+                        "versions": {
+                            "v2c": {
+                                "secModel": "v2c",
+                                "readView": "group_read_2",
+                                "readViewConfig": True,
+                                "writeView": "group_write_2",
+                                "writeViewConfig": True,
+                                "notifyView": "group_notify_2",
+                                "notifyViewConfig": True,
+                            }
+                        }
+                    },
+                    "Group3": {
+                        "versions": {
+                            "v3": {
+                                "secModel": "v3Auth",
+                                "readView": "group_read_3",
+                                "readViewConfig": True,
+                                "writeView": "group_write_3",
+                                "writeViewConfig": True,
+                                "notifyView": "group_notify_3",
+                                "notifyViewConfig": True,
+                            }
+                        }
+                    },
+                }
+            }
+        ],
+        "inputs": {
+            "snmp_groups": [
+                {"group_name": "Group1", "version": "v1", "read_view": "group_read_1", "write_view": "group_write_1", "notify_view": "group_notify_1"},
+                {"group_name": "Group2", "version": "v2c", "read_view": "group_read_2", "write_view": "group_write_2", "notify_view": "group_notify_2"},
+                {
+                    "group_name": "Group3",
+                    "version": "v3",
+                    "read_view": "group_read_3",
+                    "write_view": "group_write_3",
+                    "notify_view": "group_notify_3",
+                    "authentication": "v3Auth",
+                },
+            ]
+        },
+        "expected": {"result": "success"},
+    },
+    {
+        "name": "failure-incorrect-view",
+        "test": VerifySnmpGroup,
+        "eos_data": [
+            {
+                "groups": {
+                    "Group1": {
+                        "versions": {
+                            "v1": {
+                                "secModel": "v1",
+                                "readView": "group_read",
+                                "readViewConfig": True,
+                                "writeView": "group_write",
+                                "writeViewConfig": True,
+                                "notifyView": "group_notify",
+                                "notifyViewConfig": True,
+                            }
+                        }
+                    },
+                    "Group2": {
+                        "versions": {
+                            "v2c": {
+                                "secModel": "v2c",
+                                "readView": "group_read",
+                                "readViewConfig": True,
+                                "writeView": "group_write",
+                                "writeViewConfig": True,
+                                "notifyView": "group_notify",
+                                "notifyViewConfig": True,
+                            }
+                        }
+                    },
+                    "Group3": {
+                        "versions": {
+                            "v3": {
+                                "secModel": "v3Auth",
+                                "readView": "group_read",
+                                "readViewConfig": True,
+                                "writeView": "group_write",
+                                "writeViewConfig": True,
+                                "notifyView": "group_notify",
+                                "notifyViewConfig": True,
+                            }
+                        }
+                    },
+                }
+            }
+        ],
+        "inputs": {
+            "snmp_groups": [
+                {"group_name": "Group1", "version": "v1", "read_view": "group_read_1", "write_view": "group_write_1", "notify_view": "group_notify_1"},
+                {"group_name": "Group2", "version": "v2c", "read_view": "group_read_2", "write_view": "group_write_2", "notify_view": "group_notify_2"},
+                {
+                    "group_name": "Group3",
+                    "version": "v3",
+                    "read_view": "group_read_3",
+                    "write_view": "group_write_3",
+                    "notify_view": "group_notify_3",
+                    "authentication": "v3Auth",
+                },
+            ]
+        },
+        "expected": {
+            "result": "failure",
+            "messages": [
+                "Group: Group1, Version: v1, ReadView: group_read_1 - View configuration mismatch - ReadView: group_read, Configured: True",
+                "Group: Group1, Version: v1, WriteView: group_write_1 - View configuration mismatch - WriteView: group_write, Configured: True",
+                "Group: Group1, Version: v1, NotifyView: group_notify_1 - View configuration mismatch - NotifyView: group_notify, Configured: True",
+                "Group: Group2, Version: v2c, ReadView: group_read_2 - View configuration mismatch - ReadView: group_read, Configured: True",
+                "Group: Group2, Version: v2c, WriteView: group_write_2 - View configuration mismatch - WriteView: group_write, Configured: True",
+                "Group: Group2, Version: v2c, NotifyView: group_notify_2 - View configuration mismatch - NotifyView: group_notify, Configured: True",
+                "Group: Group3, Version: v3, ReadView: group_read_3 - View configuration mismatch - ReadView: group_read, Configured: True",
+                "Group: Group3, Version: v3, WriteView: group_write_3 - View configuration mismatch - WriteView: group_write, Configured: True",
+                "Group: Group3, Version: v3, NotifyView: group_notify_3 - View configuration mismatch - NotifyView: group_notify, Configured: True",
+            ],
+        },
+    },
+    {
+        "name": "failure-view-not-configured",
+        "test": VerifySnmpGroup,
+        "eos_data": [
+            {
+                "groups": {
+                    "Group1": {
+                        "versions": {
+                            "v1": {
+                                "secModel": "v1",
+                                "readView": "group_read",
+                                "readViewConfig": False,
+                                "writeView": "group_write",
+                                "writeViewConfig": False,
+                                "notifyView": "group_notify",
+                                "notifyViewConfig": False,
+                            }
+                        }
+                    },
+                    "Group2": {
+                        "versions": {
+                            "v2c": {
+                                "secModel": "v2c",
+                                "readView": "group_read",
+                                "readViewConfig": False,
+                                "writeView": "group_write",
+                                "writeViewConfig": False,
+                                "notifyView": "group_notify",
+                                "notifyViewConfig": False,
+                            }
+                        }
+                    },
+                    "Group3": {
+                        "versions": {
+                            "v3": {
+                                "secModel": "v3Auth",
+                                "readView": "group_read",
+                                "readViewConfig": False,
+                                "writeView": "group_write",
+                                "writeViewConfig": False,
+                                "notifyView": "group_notify",
+                                "notifyViewConfig": False,
+                            }
+                        }
+                    },
+                }
+            }
+        ],
+        "inputs": {
+            "snmp_groups": [
+                {"group_name": "Group1", "version": "v1", "read_view": "group_read", "write_view": "group_write", "notify_view": "group_notify"},
+                {"group_name": "Group2", "version": "v2c", "read_view": "group_read", "write_view": "group_write", "notify_view": "group_notify"},
+                {
+                    "group_name": "Group3",
+                    "version": "v3",
+                    "read_view": "group_read",
+                    "write_view": "group_write",
+                    "notify_view": "group_notify",
+                    "authentication": "v3Auth",
+                },
+            ]
+        },
+        "expected": {
+            "result": "failure",
+            "messages": [
+                "Group: Group1, Version: v1, ReadView: group_read - View configuration mismatch - ReadView: group_read, Configured: False",
+                "Group: Group1, Version: v1, WriteView: group_write - View configuration mismatch - WriteView: group_write, Configured: False",
+                "Group: Group1, Version: v1, NotifyView: group_notify - View configuration mismatch - NotifyView: group_notify, Configured: False",
+                "Group: Group2, Version: v2c, ReadView: group_read - View configuration mismatch - ReadView: group_read, Configured: False",
+                "Group: Group2, Version: v2c, WriteView: group_write - View configuration mismatch - WriteView: group_write, Configured: False",
+                "Group: Group2, Version: v2c, NotifyView: group_notify - View configuration mismatch - NotifyView: group_notify, Configured: False",
+                "Group: Group3, Version: v3, ReadView: group_read - View configuration mismatch - ReadView: group_read, Configured: False",
+                "Group: Group3, Version: v3, WriteView: group_write - View configuration mismatch - WriteView: group_write, Configured: False",
+                "Group: Group3, Version: v3, NotifyView: group_notify - View configuration mismatch - NotifyView: group_notify, Configured: False",
+            ],
+        },
+    },
+    {
+        "name": "failure-group-version-not-configured",
+        "test": VerifySnmpGroup,
+        "eos_data": [
+            {
+                "groups": {
+                    "Group1": {"versions": {"v1": {}}},
+                    "Group2": {"versions": {"v2c": {}}},
+                    "Group3": {"versions": {"v3": {}}},
+                }
+            }
+        ],
+        "inputs": {
+            "snmp_groups": [
+                {"group_name": "Group1", "version": "v1", "read_view": "group_read_1", "write_view": "group_write_1", "notify_view": "group_notify_1"},
+                {"group_name": "Group2", "version": "v2c", "read_view": "group_read_2", "write_view": "group_write_2", "notify_view": "group_notify_2"},
+                {
+                    "group_name": "Group3",
+                    "version": "v3",
+                    "read_view": "group_read_3",
+                    "write_view": "group_write_3",
+                    "notify_view": "group_notify_3",
+                    "authentication": "v3Auth",
+                },
+            ]
+        },
+        "expected": {
+            "result": "failure",
+            "messages": [
+                "Group: Group1, Version: v1 - Not configured",
+                "Group: Group2, Version: v2c - Not configured",
+                "Group: Group3, Version: v3 - Not configured",
+            ],
+        },
+    },
+    {
+        "name": "failure-incorrect-v3-auth-model",
+        "test": VerifySnmpGroup,
+        "eos_data": [
+            {
+                "groups": {
+                    "Group3": {
+                        "versions": {
+                            "v3": {
+                                "secModel": "v3Priv",
+                                "readView": "group_read",
+                                "readViewConfig": True,
+                                "writeView": "group_write",
+                                "writeViewConfig": True,
+                                "notifyView": "group_notify",
+                                "notifyViewConfig": True,
+                            }
+                        }
+                    },
+                }
+            }
+        ],
+        "inputs": {
+            "snmp_groups": [
+                {
+                    "group_name": "Group3",
+                    "version": "v3",
+                    "read_view": "group_read",
+                    "write_view": "group_write",
+                    "notify_view": "group_notify",
+                    "authentication": "v3Auth",
+                },
+            ]
+        },
+        "expected": {
+            "result": "failure",
+            "messages": [
+                "Group: Group3, Version: v3 - Incorrect security model - Expected: v3Auth Actual: v3Priv",
             ],
         },
     },
