@@ -282,7 +282,6 @@ DATA: list[AntaUnitTest] = [
             aaa                        debugging           debugging
             accounting                 debugging           debugging""",
         ],
-        "inputs": None,
         "expected": {"result": "success"},
     },
     {
@@ -304,7 +303,6 @@ DATA: list[AntaUnitTest] = [
             aaa                        debugging           debugging
             accounting                 debugging           debugging""",
         ],
-        "inputs": None,
         "expected": {"result": "failure", "messages": ["Syslog logging is disabled."]},
     },
 ]
