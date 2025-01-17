@@ -90,7 +90,7 @@ class ReportTable:
             return "\n".join(f"{delimiter} {line}" for line in usr_list)
         return "\n".join(f"{line}" for line in usr_list)
 
-    def _build_table(self, *, title: str, columns: list[str]) -> Table:
+    def _build_table(self, title: str, columns: list[str]) -> Table:
         """Create a table from a title and column names.
 
         All the rows in the First column are colored using RICH_COLOR_PALETTE.HEADER.
